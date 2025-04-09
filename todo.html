@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do Quest Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .rainbow-bg {
+      background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+    }
+    .dark .rainbow-bg {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    }
+    .toast {
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+    @keyframes fadein {
+      from {opacity: 0;} to {opacity: 1;}
+    }
+    @keyframes fadeout {
+      from {opacity: 1;} to {opacity: 0;}
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col rainbow-bg text-gray-900 dark:text-white transition duration-300 overflow-x-hidden">
+
+  <!-- Sticky Navbar -->
+  <header class="w-full sticky top-0 z-50 bg-gradient-to-r from-pink-400 to-indigo-400 dark:from-gray-800 dark:to-gray-900 shadow-md">
+    <div class="max-w-6xl mx-auto flex justify-between items-center px-4 sm:px-6 py-3 text-white">
+      <h1 class="text-xl sm:text-2xl font-bold">🎮 To-Do Quest</h1>
+
+      <div class="flex items-center gap-3">
+        <!-- Dark Mode Toggle -->
+        <button id="darkToggle" class="text-white text-xl hover:text-yellow-300 transition">
+          <i class="fas fa-moon"></i>
+        </button>
+        <!-- Desktop Login -->
+        <a href="#" class="hidden sm:block bg-white text-pink-600 px-4 py-1 rounded-xl font-semibold hover:bg-pink-100 transition">Login</a>
+
+        <!-- Mobile Menu Toggle -->
+        <div class="sm:hidden relative">
+          <button id="mobileMenuToggle" class="text-white text-2xl focus:outline-none"><i class="fas fa-bars"></i></button>
+          <div id="mobileMenu" class="absolute right-0 mt-2 w-32 bg-white text-pink-600 rounded-xl shadow-lg hidden z-50">
+            <a href="#" class="block px-4 py-2 text-sm hover:bg-pink-100 rounded-t-xl">Login</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" class="absolute inset-0 pointer-events-none z-40"></canvas>
+
+  <!-- Toast Notifications -->
+  <div id="toast" class="fixed top-4 right-4 bg-pink-600 text-white px-4 py-2 rounded-xl shadow-lg hidden z-[100] text-sm font-medium"></div>
+
+  <!-- Content -->
+  <main class="flex-grow flex items-center justify-center px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 bg-opacity-90 shadow-2xl rounded-3xl p-4 sm:p-6 md:p-8 w-full max-w-2xl space-y-6 border-4 border-pink-200 dark:border-gray-700 z-10">
+      
+      <div class="text-center">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-fuchsia-600 dark:text-fuchsia-400">📝 Daily Quest Board</h2>
+        <p class="text-blue-600 dark:text-blue-300 mt-1 text-sm sm:text-base">Complete quests to earn XP!</p>
+        <div class="mt-2 text-yellow-500 text-lg font-bold">✨ Score: <span id="score">0</span></div>
+        <!-- Progress Bar -->
+        <div class="mt-2 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div id="progressBar" class="bg-yellow-400 h-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input id="taskInput" type="text" placeholder="🎯 Add a quest..."
+          class="flex-1 px-4 py-2 border-2 border-blue-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-base sm:text-lg" />
+        <button onclick="addTask()"
+          class="bg-gradient-to-r from-pink-500 to-yellow-400 hover:from-pink-600 hover:to-yellow-500 text-white font-bold px-4 py-2 rounded-xl transform hover:scale-105 transition text-base sm:text-lg">Add</button>
+      </div>
+
+      <ul id="taskList" class="space-y-3 text-sm sm:text-base"></ul>
+      <button onclick="resetGame()" class="w-full mt-4 text-sm text-red-500 hover:underline hover:text-red-700">🔁 Reset Board</button>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gradient-to-r from-pink-300 to-indigo-300 dark:from-gray-700 dark:to-gray-900">
+    <div class="max-w-6xl mx-auto px-4 py-6 sm:py-8 text-white">
+      <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+        <div class="flex gap-5 text-2xl">
+          <a href="#" class="hover:text-blue-500 transition" aria-label="Twitter"><i class="fa-brands fa-linkedin"></i></a>
+          <a href="#" class="hover:text-orange-500 transition" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" class="hover:text-gray-500 transition" aria-label="GitHub"><i class="fab fa-github"></i></a>
+          <a href="#" class="hover:text-red-600 transition" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+        <div class="text-sm text-center sm:text-right">© <span id="year"></span> SURAJ BARI. All rights reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script>
+    let score = 0;
+    let completed = 0;
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    let cardColors = ['bg-rose-100','bg-amber-100','bg-lime-100','bg-sky-100','bg-indigo-100'];
+    let completeEmojis = ['🌟','🏆','💫','🚀','🔥'];
+
+    const taskList = document.getElementById("taskList");
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+      toast.classList.add("toast");
+      setTimeout(() => toast.classList.add("hidden"), 3000);
+    }
+
+    function saveTasks() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+      localStorage.setItem("score", score);
+    }
+
+    function updateProgress() {
+      const total = tasks.length;
+      const percent = total ? (completed / total) * 100 : 0;
+      document.getElementById("progressBar").style.width = `${percent}%`;
+    }
+
+    function addTask() {
+      const input = document.getElementById("taskInput");
+      const taskText = input.value.trim();
+      if (!taskText) return;
+
+      const newTask = { text: taskText, done: false };
+      tasks.push(newTask);
+      input.value = "";
+      renderTasks();
+      saveTasks();
+      showToast("✅ Task added!");
+    }
+
+    function completeTask(index) {
+      if (!tasks[index].done) {
+        tasks[index].done = true;
+        score += 10;
+        completed++;
+        showToast("🎉 Quest completed!");
+        launchConfetti();
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function deleteTask(index) {
+      if (tasks[index].done) completed--;
+      tasks.splice(index, 1);
+      showToast("🗑️ Task deleted");
+      saveTasks();
+      renderTasks();
+    }
+
+    function resetGame() {
+      tasks = [];
+      score = 0;
+      completed = 0;
+      saveTasks();
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      document.getElementById("score").textContent = score;
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        const color = cardColors[i % cardColors.length];
+        li.className = `flex items-center justify-between p-4 rounded-2xl shadow-md ${color} border border-white`;
+
+        const label = document.createElement("span");
+        label.className = `text-gray-800 dark:text-white font-semibold ${task.done ? 'line-through text-green-700' : ''}`;
+        label.textContent = `📌 ${task.text} ${task.done ? completeEmojis[i % completeEmojis.length] : ''}`;
+
+        const actions = document.createElement("div");
+        actions.className = "flex gap-3";
+
+        const completeBtn = document.createElement("button");
+        completeBtn.textContent = "🎉";
+        completeBtn.className = "text-green-700 hover:scale-125 transition-transform text-xl";
+        completeBtn.onclick = () => completeTask(i);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "🗑";
+        deleteBtn.className = "text-red-500 hover:scale-125 transition-transform text-xl";
+        deleteBtn.onclick = () => deleteTask(i);
+
+        actions.appendChild(completeBtn);
+        actions.appendChild(deleteBtn);
+        li.appendChild(label);
+        li.appendChild(actions);
+        taskList.appendChild(li);
+      });
+      updateProgress();
+    }
+
+    function launchConfetti() {
+      const duration = 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 2000 };
+      function randomInRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+      const interval = setInterval(() => {
+        if (Date.now() > animationEnd) return clearInterval(interval);
+        confetti({ particleCount: 30, origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 }, ...defaults });
+      }, 200);
+    }
+
+    // Dark Mode Toggle
+    document.getElementById("darkToggle").addEventListener("click", () => {
+      document.documentElement.classList.toggle("dark");
+      localStorage.setItem("darkMode", document.documentElement.classList.contains("dark"));
+    });
+
+    if (localStorage.getItem("darkMode") === "true") {
+      document.documentElement.classList.add("dark");
+    }
+
+    // Mobile Toggle
+    const toggleBtn = document.getElementById("mobileMenuToggle");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    toggleBtn.addEventListener("click", () => mobileMenu.classList.toggle("hidden"));
+    document.addEventListener("click", (e) => {
+      if (!toggleBtn.contains(e.target) && !mobileMenu.contains(e.target)) {
+        mobileMenu.classList.add("hidden");
+      }
+    });
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    score = parseInt(localStorage.getItem("score")) || 0;
+    completed = tasks.filter(t => t.done).length;
+    renderTasks();
+  </script>
+</body>
+</html>
