@@ -2,7 +2,7 @@
 
 Welcome to **To-Do Quest**, a fun, responsive, gamified task tracker that turns your daily goals into epic quests! Built using **HTML**, **Tailwind CSS**, and **JavaScript**, this mini web game boosts productivity with visual rewards, animations, and mobile-friendly design.
 
-![screenshot](preview.png) <!-- Optional: Add a screenshot in your repo -->
+![screenshot](preview.PNG) <!-- Optional: Add a screenshot in your repo -->
 
 ---
 
