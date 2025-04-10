@@ -22,7 +22,7 @@ Welcome to **To-Do Quest**, a fun, responsive, gamified task tracker that turns 
 
 ## 📸 Preview
 
-Live Demo: [To-Do Quest (GitHub Pages)](https://yourusername.github.io/todo-quest)
+Live Demo: [To-Do Quest (Vercel App)](https://todo-psi-lake-86.vercel.app/)
 
 ---
 
